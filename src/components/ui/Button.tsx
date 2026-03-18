@@ -1,9 +1,9 @@
-import React from 'react';
+import * as React from 'react';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'accent' | 'outline' | 'ghost' | 'link' | 'success' | 'warning' | 'error';
 export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   size?: ButtonSize;
   fullWidth?: boolean;
@@ -24,39 +24,39 @@ export const Button: React.FC<ButtonProps> = ({
   disabled,
   ...props
 }) => {
-  // Base styles
-  const baseStyles = 'inline-flex items-center justify-center font-medium rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2';
+  // Base styles: Animated, rounded-xl, smooth transition
+  const baseStyles = 'inline-flex items-center justify-center font-bold rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 transform active:scale-95';
   
   // Size styles
   const sizeStyles = {
-    xs: 'text-xs px-2 py-1',
-    sm: 'text-sm px-3 py-1.5',
-    md: 'text-sm px-4 py-2',
-    lg: 'text-base px-5 py-2.5',
-    xl: 'text-lg px-6 py-3',
+    xs: 'text-xs px-3 py-1.5',
+    sm: 'text-sm px-4 py-2',
+    md: 'text-sm px-5 py-2.5',
+    lg: 'text-base px-6 py-3',
+    xl: 'text-lg px-8 py-4',
   };
   
-  // Variant styles
+  // Variant styles: With rich gradients and glassmorphism hover where suitable
   const variantStyles = {
-    primary: 'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500',
-    secondary: 'bg-secondary-600 text-white hover:bg-secondary-700 focus:ring-secondary-500',
-    accent: 'bg-accent-500 text-white hover:bg-accent-600 focus:ring-accent-400',
-    outline: 'border border-gray-300 bg-transparent text-gray-700 hover:bg-gray-50 focus:ring-primary-500',
-    ghost: 'bg-transparent hover:bg-gray-100 text-gray-700 focus:ring-primary-500',
-    link: 'bg-transparent text-primary-600 hover:text-primary-700 hover:underline focus:ring-primary-500 p-0',
-    success: 'bg-success-500 text-white hover:bg-success-700 focus:ring-success-500',
-    warning: 'bg-warning-500 text-white hover:bg-warning-700 focus:ring-warning-500',
-    error: 'bg-error-500 text-white hover:bg-error-700 focus:ring-error-500',
+    primary: 'bg-gradient-to-r from-primary-600 to-primary-500 text-white hover:from-primary-700 hover:to-primary-600 hover:-translate-y-0.5 shadow-md hover:shadow-lg hover:shadow-primary-500/30 border border-primary-500/50',
+    secondary: 'bg-gradient-to-r from-secondary-600 to-secondary-500 text-white hover:from-secondary-700 hover:to-secondary-600 hover:-translate-y-0.5 shadow-md hover:shadow-lg hover:shadow-secondary-500/30 border border-secondary-500/50',
+    accent: 'bg-gradient-to-r from-accent-500 to-accent-400 text-white hover:from-accent-600 hover:to-accent-500 hover:-translate-y-0.5 shadow-md hover:shadow-lg hover:shadow-accent-500/30 border border-accent-500/50',
+    outline: 'border-2 border-gray-200 bg-white/50 backdrop-blur-sm text-gray-700 hover:bg-white hover:border-primary-200 hover:text-primary-600 hover:-translate-y-0.5 shadow-sm',
+    ghost: 'bg-transparent hover:bg-gray-100 text-gray-700 hover:text-primary-600',
+    link: 'bg-transparent text-primary-600 hover:text-primary-700 hover:underline p-0 active:scale-100',
+    success: 'bg-gradient-to-r from-success-500 to-success-400 text-white hover:-translate-y-0.5 shadow-md',
+    warning: 'bg-gradient-to-r from-warning-500 to-warning-400 text-white hover:-translate-y-0.5 shadow-md',
+    error: 'bg-gradient-to-r from-error-500 to-error-400 text-white hover:-translate-y-0.5 shadow-md',
   };
   
   // Loading state
-  const loadingClass = isLoading ? 'opacity-70 cursor-not-allowed' : '';
+  const loadingClass = isLoading ? 'opacity-70 cursor-not-allowed transform-none active:scale-100' : '';
   
   // Width
   const widthClass = fullWidth ? 'w-full' : '';
   
   // Disabled state
-  const disabledClass = disabled ? 'opacity-50 cursor-not-allowed pointer-events-none' : '';
+  const disabledClass = disabled ? 'opacity-50 cursor-not-allowed pointer-events-none transform-none' : '';
   
   const combinedClassName = `${baseStyles} ${sizeStyles[size]} ${variantStyles[variant]} ${widthClass} ${loadingClass} ${disabledClass} ${className}`;
   
@@ -73,9 +73,9 @@ export const Button: React.FC<ButtonProps> = ({
         </svg>
       )}
       
-      {!isLoading && leftIcon && <span className="mr-2">{leftIcon}</span>}
+      {!isLoading && leftIcon && <span className="mr-2.5 transition-transform group-hover:scale-110">{leftIcon}</span>}
       {children}
-      {!isLoading && rightIcon && <span className="ml-2">{rightIcon}</span>}
+      {!isLoading && rightIcon && <span className="ml-2.5 transition-transform group-hover:translate-x-1">{rightIcon}</span>}
     </button>
   );
 };

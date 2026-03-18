@@ -1,6 +1,6 @@
-import React from 'react';
+import * as React from 'react';
 
-interface CardProps {
+export interface CardProps {
   children: React.ReactNode;
   className?: string;
   onClick?: () => void;
@@ -12,21 +12,31 @@ export const Card: React.FC<CardProps> = ({
   className = '',
   onClick,
   hoverable = false,
-}) => {
-  const hoverableClass = hoverable ? 'transform hover:-translate-y-1 transition-transform duration-300 cursor-pointer' : '';
-  const clickableClass = onClick ? 'cursor-pointer' : '';
+}: CardProps) => {
+  const hoverableClass = hoverable ? 'transform hover:-translate-y-1 hover:shadow-glass-hover transition-all duration-300 cursor-pointer' : 'transition-shadow duration-300 hover:shadow-md';
+  const clickableClass = onClick ? 'cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500/50' : '';
+  
+  // If the card already specifies a background color, we don't apply the 'glass' utility fully
+  const hasBgClass = className.includes('bg-');
+  const baseClasses = hasBgClass 
+    ? `rounded-2xl shadow-sm border border-white/50 backdrop-blur-md relative overflow-hidden` 
+    : `glass rounded-2xl`;
   
   return (
     <div 
-      className={`bg-white rounded-lg shadow-md overflow-hidden ${hoverableClass} ${clickableClass} ${className}`}
+      className={`${baseClasses} ${hoverableClass} ${clickableClass} ${className}`}
       onClick={onClick}
     >
-      {children}
+      {/* Decorative gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-white/10 opacity-50 pointer-events-none"></div>
+      <div className="relative z-10">
+        {children}
+      </div>
     </div>
   );
 };
 
-interface CardHeaderProps {
+export interface CardHeaderProps {
   children: React.ReactNode;
   className?: string;
 }
@@ -34,15 +44,15 @@ interface CardHeaderProps {
 export const CardHeader: React.FC<CardHeaderProps> = ({
   children,
   className = '',
-}) => {
+}: CardHeaderProps) => {
   return (
-    <div className={`px-6 py-4 border-b border-gray-200 ${className}`}>
+    <div className={`px-6 py-5 border-b border-gray-100/50 bg-white/30 backdrop-blur-sm ${className}`}>
       {children}
     </div>
   );
 };
 
-interface CardBodyProps {
+export interface CardBodyProps {
   children: React.ReactNode;
   className?: string;
 }
@@ -50,15 +60,15 @@ interface CardBodyProps {
 export const CardBody: React.FC<CardBodyProps> = ({
   children,
   className = '',
-}) => {
+}: CardBodyProps) => {
   return (
-    <div className={`px-6 py-4 ${className}`}>
+    <div className={`px-6 py-5 ${className}`}>
       {children}
     </div>
   );
 };
 
-interface CardFooterProps {
+export interface CardFooterProps {
   children: React.ReactNode;
   className?: string;
 }
@@ -66,9 +76,9 @@ interface CardFooterProps {
 export const CardFooter: React.FC<CardFooterProps> = ({
   children,
   className = '',
-}) => {
+}: CardFooterProps) => {
   return (
-    <div className={`px-6 py-4 border-t border-gray-200 ${className}`}>
+    <div className={`px-6 py-4 border-t border-gray-100/50 bg-gray-50/30 backdrop-blur-sm ${className}`}>
       {children}
     </div>
   );
