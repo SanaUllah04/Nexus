@@ -5,6 +5,9 @@ import { AuthProvider } from './context/AuthContext';
 // Layouts
 import { DashboardLayout } from './components/layout/DashboardLayout';
 
+// Public Pages
+import { LandingPage } from './pages/LandingPage';
+
 // Auth Pages
 import { LoginPage } from './pages/auth/LoginPage';
 import { RegisterPage } from './pages/auth/RegisterPage';
@@ -35,6 +38,9 @@ function App() {
     <AuthProvider>
       <Router>
         <Routes>
+          {/* Public Root Route */}
+          <Route path="/" element={<LandingPage />} />
+          
           {/* Authentication Routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
@@ -90,11 +96,8 @@ function App() {
             <Route path=":userId" element={<ChatPage />} />
           </Route>
           
-          {/* Redirect root to login */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          
-          {/* Catch all other routes and redirect to login */}
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          {/* Catch all other routes and redirect to home */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>
     </AuthProvider>
