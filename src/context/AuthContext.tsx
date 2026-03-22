@@ -1,6 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { User, UserRole, AuthContextType } from '../types';
-import { users } from '../data/users';
 import toast from 'react-hot-toast';
 
 // Create Auth Context
@@ -24,24 +23,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(false);
   }, []);
 
-  // Mock login function - in a real app, this would make an API call
+  // Real login function - fetch from backend
   const login = async (email: string, password: string, role: UserRole): Promise<void> => {
     setIsLoading(true);
 
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch('http://localhost:5000/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, role })
+      });
 
-      // Find user with matching email and role
-      const foundUser = users.find(u => u.email === email && u.role === role);
-
-      if (foundUser) {
-        setUser(foundUser);
-        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(foundUser));
-        toast.success('Successfully logged in!');
-      } else {
-        throw new Error('Invalid credentials or user not found');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Login failed');
       }
+
+      const data = await response.json();
+
+      // Create user object from response
+      const loggedInUser: User = {
+        id: data.user.id,
+        name: data.user.name,
+        email: data.user.email,
+        role: data.user.role,
+        avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(data.user.name)}&background=random`,
+        bio: '',
+        isOnline: true,
+        createdAt: new Date().toISOString()
+      };
+
+      setUser(loggedInUser);
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(loggedInUser));
+      toast.success('Successfully logged in!');
     } catch (error) {
       toast.error((error as Error).message);
       throw error;
@@ -73,23 +87,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Mock forgot password function
+  // Real forgot password function - check backend
   const forgotPassword = async (email: string): Promise<void> => {
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch('http://localhost:5000/api/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
 
-      // Check if user exists
-      const user = users.find(u => u.email === email);
-      if (!user) {
-        throw new Error('No account found with this email');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Request failed');
       }
 
-      // Generate reset token (in a real app, this would be a secure token)
-      const resetToken = Math.random().toString(36).substring(2, 15);
-      localStorage.setItem(RESET_TOKEN_KEY, resetToken);
-
-      // In a real app, this would send an email
       toast.success('Password reset instructions sent to your email');
     } catch (error) {
       toast.error((error as Error).message);
@@ -97,20 +108,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Mock reset password function
+  // Real reset password function
   const resetPassword = async (token: string, newPassword: string): Promise<void> => {
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch('http://localhost:5000/api/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, newPassword })
+      });
 
-      // Verify token
-      const storedToken = localStorage.getItem(RESET_TOKEN_KEY);
-      if (token !== storedToken) {
-        throw new Error('Invalid or expired reset token');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Reset failed');
       }
 
-      // In a real app, this would update the user's password in the database
-      localStorage.removeItem(RESET_TOKEN_KEY);
       toast.success('Password reset successfully');
     } catch (error) {
       toast.error((error as Error).message);
@@ -125,23 +136,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     toast.success('Logged out successfully');
   };
 
-  // Update user profile
+  // Update user profile - connect to backend
   const updateProfile = async (userId: string, updates: Partial<User>): Promise<void> => {
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch(`http://localhost:5000/api/users/${userId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      });
 
-      // Update user in mock data
-      const userIndex = users.findIndex(u => u.id === userId);
-      if (userIndex === -1) {
-        throw new Error('User not found');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Update failed');
       }
 
-      const updatedUser = { ...users[userIndex], ...updates };
-      users[userIndex] = updatedUser;
+      const data = await response.json();
 
       // Update current user if it's the same user
       if (user?.id === userId) {
+        const updatedUser = { ...user, ...updates };
         setUser(updatedUser);
         localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
       }
