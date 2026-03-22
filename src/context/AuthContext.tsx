@@ -27,14 +27,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Mock login function - in a real app, this would make an API call
   const login = async (email: string, password: string, role: UserRole): Promise<void> => {
     setIsLoading(true);
-    
+
     try {
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       // Find user with matching email and role
       const foundUser = users.find(u => u.email === email && u.role === role);
-      
+
       if (foundUser) {
         setUser(foundUser);
         localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(foundUser));
@@ -50,36 +50,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Mock register function - in a real app, this would make an API call
   const register = async (name: string, email: string, password: string, role: UserRole): Promise<void> => {
     setIsLoading(true);
-    
+
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Check if email already exists
-      if (users.some(u => u.email === email)) {
-        throw new Error('Email already in use');
-      }
-      
-      // Create new user
-      const newUser: User = {
-        id: `${role[0]}${users.length + 1}`,
-        name,
-        email,
-        role,
-        avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`,
-        bio: '',
-        isOnline: true,
-        createdAt: new Date().toISOString()
-      };
-      
-      // Add user to mock data
-      users.push(newUser);
-      
-      setUser(newUser);
-      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(newUser));
+      const response = await fetch('http://localhost:5000/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password, role })
+      });
+
+      if (!response.ok) throw new Error('Registration failed');
+
+      const data = await response.json();
+      console.log('Server response:', data);
       toast.success('Account created successfully!');
     } catch (error) {
       toast.error((error as Error).message);
@@ -94,17 +78,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       // Check if user exists
       const user = users.find(u => u.email === email);
       if (!user) {
         throw new Error('No account found with this email');
       }
-      
+
       // Generate reset token (in a real app, this would be a secure token)
       const resetToken = Math.random().toString(36).substring(2, 15);
       localStorage.setItem(RESET_TOKEN_KEY, resetToken);
-      
+
       // In a real app, this would send an email
       toast.success('Password reset instructions sent to your email');
     } catch (error) {
@@ -118,13 +102,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       // Verify token
       const storedToken = localStorage.getItem(RESET_TOKEN_KEY);
       if (token !== storedToken) {
         throw new Error('Invalid or expired reset token');
       }
-      
+
       // In a real app, this would update the user's password in the database
       localStorage.removeItem(RESET_TOKEN_KEY);
       toast.success('Password reset successfully');
@@ -146,22 +130,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       // Update user in mock data
       const userIndex = users.findIndex(u => u.id === userId);
       if (userIndex === -1) {
         throw new Error('User not found');
       }
-      
+
       const updatedUser = { ...users[userIndex], ...updates };
       users[userIndex] = updatedUser;
-      
+
       // Update current user if it's the same user
       if (user?.id === userId) {
         setUser(updatedUser);
         localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
       }
-      
+
       toast.success('Profile updated successfully');
     } catch (error) {
       toast.error((error as Error).message);
