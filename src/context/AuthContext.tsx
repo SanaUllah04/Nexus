@@ -2,19 +2,23 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import { User, UserRole, AuthContextType } from '../types';
 import toast from 'react-hot-toast';
 
-// Create Auth Context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Local storage keys
+const TOKEN_STORAGE_KEY = 'business_nexus_token';
 const USER_STORAGE_KEY = 'business_nexus_user';
-const RESET_TOKEN_KEY = 'business_nexus_reset_token';
 
-// Auth Provider Component
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check for stored user on initial load
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem(TOKEN_STORAGE_KEY);
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    };
+  };
+
   useEffect(() => {
     const storedUser = localStorage.getItem(USER_STORAGE_KEY);
     if (storedUser) {
@@ -23,7 +27,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(false);
   }, []);
 
-  // Real login function - fetch from backend
+  const fetchProfile = async (): Promise<void> => {
+    try {
+      const response = await fetch('http://localhost:5000/api/profile', {
+        method: 'GET',
+        headers: getAuthHeaders()
+      });
+
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          logout();
+          throw new Error('Session expired. Please login again.');
+        }
+        throw new Error('Failed to fetch profile');
+      }
+
+      const data = await response.json();
+      console.log('Profile fetched:', data.user);
+    } catch (error) {
+      console.error('Fetch profile error:', error);
+    }
+  };
+
   const login = async (email: string, password: string, role: UserRole): Promise<void> => {
     setIsLoading(true);
 
@@ -41,7 +66,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const data = await response.json();
 
-      // Create user object from response
+      localStorage.setItem(TOKEN_STORAGE_KEY, data.token);
+
       const loggedInUser: User = {
         id: data.user.id,
         name: data.user.name,
@@ -87,7 +113,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Real forgot password function - check backend
   const forgotPassword = async (email: string): Promise<void> => {
     try {
       const response = await fetch('http://localhost:5000/api/forgot-password', {
@@ -108,7 +133,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Real reset password function
   const resetPassword = async (token: string, newPassword: string): Promise<void> => {
     try {
       const response = await fetch('http://localhost:5000/api/reset-password', {
@@ -129,30 +153,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Logout function
   const logout = (): void => {
     setUser(null);
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
     localStorage.removeItem(USER_STORAGE_KEY);
     toast.success('Logged out successfully');
   };
 
-  // Update user profile - connect to backend
   const updateProfile = async (userId: string, updates: Partial<User>): Promise<void> => {
     try {
       const response = await fetch(`http://localhost:5000/api/users/${userId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(updates)
       });
 
       if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          logout();
+          throw new Error('Session expired. Please login again.');
+        }
         const error = await response.json();
         throw new Error(error.error || 'Update failed');
       }
 
       const data = await response.json();
 
-      // Update current user if it's the same user
       if (user?.id === userId) {
         const updatedUser = { ...user, ...updates };
         setUser(updatedUser);
@@ -160,6 +186,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       toast.success('Profile updated successfully');
+    } catch (error) {
+      toast.error((error as Error).message);
+      throw error;
+    }
+  };
+
+  const deleteAccount = async (userId: string): Promise<void> => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/users/${userId}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
+
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          logout();
+          throw new Error('Session expired. Please login again.');
+        }
+        const error = await response.json();
+        throw new Error(error.error || 'Delete failed');
+      }
+
+      logout();
+      toast.success('Account deleted successfully');
     } catch (error) {
       toast.error((error as Error).message);
       throw error;
@@ -174,6 +224,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     forgotPassword,
     resetPassword,
     updateProfile,
+    deleteAccount,
+    fetchProfile,
     isAuthenticated: !!user,
     isLoading
   };
@@ -181,7 +233,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-// Custom hook for using auth context
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (context === undefined) {

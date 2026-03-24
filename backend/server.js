@@ -1,6 +1,8 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
 
 const app = express();
 
@@ -12,54 +14,110 @@ mongoose.connect('mongodb://localhost:27017/nexus')
     .then(() => console.log('MongoDB connected'))
     .catch(err => console.log(err));
 
-// User Schema
+// User Schema with token field
 const userSchema = new mongoose.Schema({
     name: String,
     email: { type: String, unique: true },
     password: String,
     role: String,
+    token: String,
+    tokenExpires: Date,
     createdAt: { type: Date, default: Date.now }
 });
 
 const User = mongoose.model('User', userSchema);
 
+// Middleware to verify JWT token
+const authenticateToken = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) {
+        return res.status(401).json({ error: 'Access denied. No token provided.' });
+    }
+
+    try {
+        const verified = jwt.verify(token, process.env.JWT_SECRET);
+        req.user = verified;
+        console.log('🔐 Token VERIFIED for user:', verified.email);
+        next();
+    } catch (err) {
+        console.log('❌ Token verification FAILED:', err.message);
+        res.status(403).json({ error: 'Invalid or expired token' });
+    }
+};
+
 // Register endpoint
 app.post('/api/register', async (req, res) => {
     const { name, email, password, role } = req.body;
-    console.log('Received:', { name, email, password, role });
+    console.log('📥 Received:', { name, email, password, role });
 
     try {
         const newUser = new User({ name, email, password, role });
         await newUser.save();
-        console.log('Saved to DB:', newUser);
+        console.log('✅ Saved to DB:', newUser);
         res.json({ message: 'User saved to database' });
     } catch (err) {
-        console.log('Error:', err.message);
+        console.log('❌ Error:', err.message);
         res.status(400).json({ error: err.message });
     }
 });
 
-// Login endpoint - ADD THIS
+// Login endpoint - reuse existing valid token or create new one
 app.post('/api/login', async (req, res) => {
     const { email, password, role } = req.body;
-    console.log('Login attempt:', { email, password, role });
+    console.log('🔑 Login attempt:', { email, password, role });
 
     try {
         const user = await User.findOne({ email, role });
 
         if (!user) {
-            console.log('User not found');
+            console.log('❌ User not found');
             return res.status(400).json({ error: 'Invalid credentials' });
         }
 
         if (user.password !== password) {
-            console.log('Password mismatch');
+            console.log('❌ Password mismatch');
             return res.status(400).json({ error: 'Invalid credentials' });
         }
 
-        console.log('Login successful:', user);
+        let token = user.token;
+        let tokenValid = false;
+
+        // Check if existing token is still valid
+        if (token && user.tokenExpires && new Date() < user.tokenExpires) {
+            try {
+                jwt.verify(token, process.env.JWT_SECRET);
+                tokenValid = true;
+                console.log('♻️  REUSING existing valid token');
+                console.log('   Token:', token.substring(0, 50) + '...');
+            } catch (err) {
+                console.log('⏰ Existing token EXPIRED, creating NEW one');
+            }
+        } else {
+            console.log('🆕 No valid token found, creating NEW token');
+        }
+
+        // Create new token if none exists or expired
+        if (!tokenValid) {
+            token = jwt.sign(
+                { userId: user._id, email: user.email, role: user.role },
+                process.env.JWT_SECRET,
+                { expiresIn: '24h' }
+            );
+
+            // Save token to user document
+            user.token = token;
+            user.tokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+            await user.save();
+            console.log('✅ NEW token CREATED and SAVED to DB');
+            console.log('   Token:', token.substring(0, 50) + '...');
+        }
+
+        console.log('🎉 Login SUCCESS - Token being sent to user');
         res.json({
             message: 'Login successful',
+            token: token,
             user: {
                 id: user._id,
                 name: user.name,
@@ -68,35 +126,79 @@ app.post('/api/login', async (req, res) => {
             }
         });
     } catch (err) {
-        console.log('Login error:', err.message);
+        console.log('❌ Login error:', err.message);
         res.status(500).json({ error: err.message });
     }
 });
 
-// Forgot password endpoint
+// Protected route - get current user profile
+app.get('/api/profile', authenticateToken, async (req, res) => {
+    console.log('📋 Profile request with VALID token for userId:', req.user.userId);
+    try {
+        const user = await User.findById(req.user.userId).select('-password');
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        res.json({ user });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Protected - update own profile only
+app.put('/api/users/:id', authenticateToken, async (req, res) => {
+    console.log('✏️  Update request with VALID token for userId:', req.user.userId);
+    try {
+        if (req.params.id !== req.user.userId) {
+            return res.status(403).json({ error: 'Can only update your own profile' });
+        }
+
+        const updates = req.body;
+        const user = await User.findByIdAndUpdate(req.params.id, updates, { new: true }).select('-password');
+        res.json({ user });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Protected - delete own account
+app.delete('/api/users/:id', authenticateToken, async (req, res) => {
+    console.log('🗑️  Delete request with VALID token for userId:', req.user.userId);
+    try {
+        if (req.params.id !== req.user.userId) {
+            return res.status(403).json({ error: 'Can only delete your own account' });
+        }
+
+        await User.findByIdAndDelete(req.params.id);
+        res.json({ message: 'Account deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Forgot password endpoint (public)
 app.post('/api/forgot-password', async (req, res) => {
-    const { email } = req.body;
-    const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ error: 'No account found' });
+    try {
+        const { email } = req.body;
+        const user = await User.findOne({ email });
+        if (!user) return res.status(400).json({ error: 'No account found' });
 
-    const resetToken = Math.random().toString(36).substring(2, 15);
-    console.log('Reset token for', email, ':', resetToken);
-    res.json({ message: 'Instructions sent' });
+        const resetToken = Math.random().toString(36).substring(2, 15);
+        console.log('📧 Reset token for', email, ':', resetToken);
+        res.json({ message: 'Instructions sent' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
-// Reset password endpoint
+// Reset password endpoint (public)
 app.post('/api/reset-password', async (req, res) => {
-    const { token, newPassword } = req.body;
-    res.json({ message: 'Password reset' });
+    try {
+        const { token, newPassword } = req.body;
+        res.json({ message: 'Password reset' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
-// Update profile endpoint
-app.put('/api/users/:id', async (req, res) => {
-    const { id } = req.params;
-    const updates = req.body;
-    const user = await User.findByIdAndUpdate(id, updates, { new: true });
-    res.json({ user });
-});
-
-// START SERVER - MUST BE LAST
-app.listen(5000, () => console.log('Server on port 5000'));
+app.listen(5000, () => console.log('🚀 Server on port 5000'));
