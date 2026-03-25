@@ -1,6 +1,7 @@
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { MessageCircle, Users, Calendar, Building2, MapPin, UserCircle, FileText, DollarSign, Send } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { Avatar } from '../../components/ui/Avatar';
 import { Button } from '../../components/ui/Button';
 import { Card, CardBody, CardHeader } from '../../components/ui/Card';
@@ -22,7 +23,7 @@ export const EntrepreneurProfile: React.FC = () => {
       <div className="text-center py-12">
         <h2 className="text-2xl font-bold text-gray-900">Entrepreneur not found</h2>
         <p className="text-gray-600 mt-2">The entrepreneur profile you're looking for doesn't exist or has been removed.</p>
-        <Link to="/dashboard/investor">
+        <Link to={currentUser?.role === 'investor' ? '/dashboard/investor' : '/dashboard/entrepreneur'}>
           <Button variant="outline" className="mt-4">Back to Dashboard</Button>
         </Link>
       </div>
@@ -115,12 +116,14 @@ export const EntrepreneurProfile: React.FC = () => {
             )}
             
             {isCurrentUser && (
-              <Button
-                variant="outline"
-                leftIcon={<UserCircle size={18} />}
-              >
-                Edit Profile
-              </Button>
+              <Link to="/settings">
+                <Button
+                  variant="outline"
+                  leftIcon={<UserCircle size={18} />}
+                >
+                  Edit Profile
+                </Button>
+              </Link>
             )}
           </div>
         </CardBody>
@@ -297,7 +300,7 @@ export const EntrepreneurProfile: React.FC = () => {
                     <h3 className="text-sm font-medium text-gray-900">Pitch Deck</h3>
                     <p className="text-xs text-gray-500">Updated 2 months ago</p>
                   </div>
-                  <Button variant="outline" size="sm">View</Button>
+                  <Button variant="outline" size="sm" onClick={() => toast.success('Opening Pitch Deck...')}>View</Button>
                 </div>
                 
                 <div className="flex items-center p-3 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors">
@@ -308,7 +311,7 @@ export const EntrepreneurProfile: React.FC = () => {
                     <h3 className="text-sm font-medium text-gray-900">Business Plan</h3>
                     <p className="text-xs text-gray-500">Updated 1 month ago</p>
                   </div>
-                  <Button variant="outline" size="sm">View</Button>
+                  <Button variant="outline" size="sm" onClick={() => toast.success('Opening Business Plan...')}>View</Button>
                 </div>
                 
                 <div className="flex items-center p-3 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors">
@@ -319,7 +322,7 @@ export const EntrepreneurProfile: React.FC = () => {
                     <h3 className="text-sm font-medium text-gray-900">Financial Projections</h3>
                     <p className="text-xs text-gray-500">Updated 2 weeks ago</p>
                   </div>
-                  <Button variant="outline" size="sm">View</Button>
+                  <Button variant="outline" size="sm" onClick={() => toast.success('Opening Financial Projections...')}>View</Button>
                 </div>
               </div>
               

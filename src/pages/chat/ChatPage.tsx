@@ -10,6 +10,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Message } from '../../types';
 import { findUserById } from '../../data/users';
 import { getMessagesBetweenUsers, sendMessage, getConversationsForUser } from '../../data/messages';
+import toast from 'react-hot-toast';
 import { MessageCircle } from 'lucide-react';
 
 export const ChatPage: React.FC = () => {
@@ -97,6 +98,7 @@ export const ChatPage: React.FC = () => {
                   size="sm"
                   className="rounded-full p-2"
                   aria-label="Voice call"
+                  onClick={() => toast.success('Voice call started')}
                 >
                   <Phone size={18} />
                 </Button>
@@ -106,6 +108,7 @@ export const ChatPage: React.FC = () => {
                   size="sm"
                   className="rounded-full p-2"
                   aria-label="Video call"
+                  onClick={() => toast.success('Video call started')}
                 >
                   <Video size={18} />
                 </Button>
@@ -115,6 +118,7 @@ export const ChatPage: React.FC = () => {
                   size="sm"
                   className="rounded-full p-2"
                   aria-label="Info"
+                  onClick={() => toast.success('Viewing contact info')}
                 >
                   <Info size={18} />
                 </Button>
@@ -154,6 +158,7 @@ export const ChatPage: React.FC = () => {
                   size="sm"
                   className="rounded-full p-2"
                   aria-label="Add emoji"
+                  onClick={() => toast.success('Emoji picker opened')}
                 >
                   <Smile size={20} />
                 </Button>

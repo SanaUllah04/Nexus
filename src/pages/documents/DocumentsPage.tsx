@@ -1,5 +1,6 @@
 import React from 'react';
 import { FileText, Upload, Download, Trash2, Share2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { Card, CardHeader, CardBody } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
@@ -48,7 +49,7 @@ export const DocumentsPage: React.FC = () => {
           <p className="text-gray-600">Manage your startup's important files</p>
         </div>
         
-        <Button leftIcon={<Upload size={18} />}>
+        <Button leftIcon={<Upload size={18} />} onClick={() => toast.success('Upload dialog opened')}>
           Upload Document
         </Button>
       </div>
@@ -77,16 +78,16 @@ export const DocumentsPage: React.FC = () => {
             <div className="pt-4 border-t border-gray-200">
               <h3 className="text-sm font-medium text-gray-900 mb-2">Quick Access</h3>
               <div className="space-y-2">
-                <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md">
+                <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md" onClick={() => toast.success('Filtering by Recent Files')}>
                   Recent Files
                 </button>
-                <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md">
+                <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md" onClick={() => toast.success('Filtering by Shared with Me')}>
                   Shared with Me
                 </button>
-                <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md">
+                <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md" onClick={() => toast.success('Filtering by Starred')}>
                   Starred
                 </button>
-                <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md">
+                <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md" onClick={() => toast.success('Filtering by Trash')}>
                   Trash
                 </button>
               </div>
@@ -100,10 +101,10 @@ export const DocumentsPage: React.FC = () => {
             <CardHeader className="flex justify-between items-center">
               <h2 className="text-lg font-medium text-gray-900">All Documents</h2>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={() => toast.success('Sort options opened')}>
                   Sort by
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={() => toast.success('Filter options opened')}>
                   Filter
                 </Button>
               </div>
@@ -142,6 +143,7 @@ export const DocumentsPage: React.FC = () => {
                         size="sm"
                         className="p-2"
                         aria-label="Download"
+                        onClick={() => toast.success(`Downloading ${doc.name}...`)}
                       >
                         <Download size={18} />
                       </Button>
@@ -151,6 +153,7 @@ export const DocumentsPage: React.FC = () => {
                         size="sm"
                         className="p-2"
                         aria-label="Share"
+                        onClick={() => toast.success(`Share dialog for ${doc.name} opened`)}
                       >
                         <Share2 size={18} />
                       </Button>
@@ -160,6 +163,7 @@ export const DocumentsPage: React.FC = () => {
                         size="sm"
                         className="p-2 text-error-600 hover:text-error-700"
                         aria-label="Delete"
+                        onClick={() => toast.success(`Moved ${doc.name} to trash`)}
                       >
                         <Trash2 size={18} />
                       </Button>

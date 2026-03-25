@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Bell, MessageCircle, UserPlus, DollarSign } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { Card, CardBody } from '../../components/ui/Card';
 import { Avatar } from '../../components/ui/Avatar';
 import { Badge } from '../../components/ui/Badge';
@@ -42,6 +43,13 @@ const notifications = [
 ];
 
 export const NotificationsPage: React.FC = () => {
+  const [activeNotifications, setActiveNotifications] = useState(notifications);
+
+  const handleMarkAllAsRead = () => {
+    setActiveNotifications(activeNotifications.map(n => ({ ...n, unread: false })));
+    toast.success('All notifications marked as read');
+  };
+
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'message':
@@ -63,13 +71,13 @@ export const NotificationsPage: React.FC = () => {
           <p className="text-gray-600">Stay updated with your network activity</p>
         </div>
         
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" onClick={handleMarkAllAsRead}>
           Mark all as read
         </Button>
       </div>
       
       <div className="space-y-4">
-        {notifications.map(notification => (
+        {activeNotifications.map(notification => (
           <Card
             key={notification.id}
             className={`transition-colors duration-200 ${

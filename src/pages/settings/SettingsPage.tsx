@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { User, Lock, Bell, Globe, Palette, CreditCard } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { Card, CardHeader, CardBody } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
@@ -9,6 +10,7 @@ import { useAuth } from '../../context/AuthContext';
 
 export const SettingsPage: React.FC = () => {
   const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState('Profile');
   
   if (!user) return null;
   
@@ -24,32 +26,50 @@ export const SettingsPage: React.FC = () => {
         <Card className="lg:col-span-1">
           <CardBody className="p-2">
             <nav className="space-y-1">
-              <button className="flex items-center w-full px-3 py-2 text-sm font-medium text-primary-700 bg-primary-50 rounded-md">
+              <button 
+                onClick={() => setActiveTab('Profile')}
+                className={`flex items-center w-full px-3 py-2 text-sm font-medium rounded-md ${activeTab === 'Profile' ? 'text-primary-700 bg-primary-50' : 'text-gray-700 hover:bg-gray-50'}`}
+              >
                 <User size={18} className="mr-3" />
                 Profile
               </button>
               
-              <button className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md">
+              <button 
+                onClick={() => setActiveTab('Security')}
+                className={`flex items-center w-full px-3 py-2 text-sm font-medium rounded-md ${activeTab === 'Security' ? 'text-primary-700 bg-primary-50' : 'text-gray-700 hover:bg-gray-50'}`}
+              >
                 <Lock size={18} className="mr-3" />
                 Security
               </button>
               
-              <button className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md">
+              <button 
+                onClick={() => setActiveTab('Notifications')}
+                className={`flex items-center w-full px-3 py-2 text-sm font-medium rounded-md ${activeTab === 'Notifications' ? 'text-primary-700 bg-primary-50' : 'text-gray-700 hover:bg-gray-50'}`}
+              >
                 <Bell size={18} className="mr-3" />
                 Notifications
               </button>
               
-              <button className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md">
+              <button 
+                onClick={() => setActiveTab('Language')}
+                className={`flex items-center w-full px-3 py-2 text-sm font-medium rounded-md ${activeTab === 'Language' ? 'text-primary-700 bg-primary-50' : 'text-gray-700 hover:bg-gray-50'}`}
+              >
                 <Globe size={18} className="mr-3" />
                 Language
               </button>
               
-              <button className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md">
+              <button 
+                onClick={() => setActiveTab('Appearance')}
+                className={`flex items-center w-full px-3 py-2 text-sm font-medium rounded-md ${activeTab === 'Appearance' ? 'text-primary-700 bg-primary-50' : 'text-gray-700 hover:bg-gray-50'}`}
+              >
                 <Palette size={18} className="mr-3" />
                 Appearance
               </button>
               
-              <button className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md">
+              <button 
+                onClick={() => setActiveTab('Billing')}
+                className={`flex items-center w-full px-3 py-2 text-sm font-medium rounded-md ${activeTab === 'Billing' ? 'text-primary-700 bg-primary-50' : 'text-gray-700 hover:bg-gray-50'}`}
+              >
                 <CreditCard size={18} className="mr-3" />
                 Billing
               </button>
@@ -59,7 +79,7 @@ export const SettingsPage: React.FC = () => {
         
         {/* Main settings content */}
         <div className="lg:col-span-3 space-y-6">
-          {/* Profile Settings */}
+          {activeTab === 'Profile' && (
           <Card>
             <CardHeader>
               <h2 className="text-lg font-medium text-gray-900">Profile Settings</h2>
@@ -73,7 +93,7 @@ export const SettingsPage: React.FC = () => {
                 />
                 
                 <div>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={() => toast.success('Open file picker...')}>
                     Change Photo
                   </Button>
                   <p className="mt-2 text-sm text-gray-500">
@@ -118,13 +138,14 @@ export const SettingsPage: React.FC = () => {
               </div>
               
               <div className="flex justify-end gap-3">
-                <Button variant="outline">Cancel</Button>
-                <Button>Save Changes</Button>
+                <Button variant="outline" onClick={() => toast.success('Changes reverted')}>Cancel</Button>
+                <Button onClick={() => toast.success('Profile settings saved')}>Save Changes</Button>
               </div>
             </CardBody>
           </Card>
-          
-          {/* Security Settings */}
+          )}
+
+          {activeTab === 'Security' && (
           <Card>
             <CardHeader>
               <h2 className="text-lg font-medium text-gray-900">Security Settings</h2>
@@ -139,7 +160,7 @@ export const SettingsPage: React.FC = () => {
                     </p>
                     <Badge variant="error" className="mt-1">Not Enabled</Badge>
                   </div>
-                  <Button variant="outline">Enable</Button>
+                  <Button variant="outline" onClick={() => toast.success('Opening 2FA setup...')}>Enable</Button>
                 </div>
               </div>
               
@@ -162,12 +183,21 @@ export const SettingsPage: React.FC = () => {
                   />
                   
                   <div className="flex justify-end">
-                    <Button>Update Password</Button>
+                    <Button onClick={() => toast.success('Password updated successfully')}>Update Password</Button>
                   </div>
                 </div>
               </div>
             </CardBody>
           </Card>
+          )}
+
+          {activeTab !== 'Profile' && activeTab !== 'Security' && (
+            <Card>
+              <CardBody className="py-12 text-center text-gray-500">
+                {activeTab} settings are coming soon.
+              </CardBody>
+            </Card>
+          )}
         </div>
       </div>
     </div>

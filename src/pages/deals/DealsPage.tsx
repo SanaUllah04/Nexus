@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Search, Filter, DollarSign, TrendingUp, Users, Calendar } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { Card, CardHeader, CardBody } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
@@ -87,7 +88,7 @@ export const DealsPage: React.FC = () => {
           <p className="text-gray-600">Track and manage your investment pipeline</p>
         </div>
         
-        <Button>
+        <Button onClick={() => toast.success('Creating new deal...')}>
           Add Deal
         </Button>
       </div>
@@ -256,7 +257,7 @@ export const DealsPage: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" onClick={() => toast.success(`Viewing details for ${deal.startup.name}...`)}>
                         View Details
                       </Button>
                     </td>

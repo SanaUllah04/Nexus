@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Search, Filter, MapPin } from 'lucide-react';
 import { Input } from '../../components/ui/Input';
 import { Card, CardHeader, CardBody } from '../../components/ui/Card';
-import { Badge } from '../../components/ui/Badge';
 import { EntrepreneurCard } from '../../components/entrepreneur/EntrepreneurCard';
 import { entrepreneurs } from '../../data/users';
 
@@ -10,6 +9,7 @@ export const EntrepreneursPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIndustries, setSelectedIndustries] = useState<string[]>([]);
   const [selectedFundingRange, setSelectedFundingRange] = useState<string[]>([]);
+  const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
   
   // Get unique industries and funding ranges
   const allIndustries = Array.from(new Set(entrepreneurs.map(e => e.industry)));
@@ -38,8 +38,12 @@ export const EntrepreneursPage: React.FC = () => {
           default: return true;
         }
       });
+      
+    // Location filter
+    const matchesLocation = selectedLocations.length === 0 ||
+      selectedLocations.includes(entrepreneur.location);
     
-    return matchesSearch && matchesIndustry && matchesFunding;
+    return matchesSearch && matchesIndustry && matchesFunding && matchesLocation;
   });
   
   const toggleIndustry = (industry: string) => {
@@ -55,6 +59,14 @@ export const EntrepreneursPage: React.FC = () => {
       prev.includes(range)
         ? prev.filter(r => r !== range)
         : [...prev, range]
+    );
+  };
+  
+  const toggleLocation = (location: string) => {
+    setSelectedLocations(prev =>
+      prev.includes(location)
+        ? prev.filter(l => l !== location)
+        : [...prev, location]
     );
   };
   
@@ -114,18 +126,20 @@ export const EntrepreneursPage: React.FC = () => {
               <div>
                 <h3 className="text-sm font-medium text-gray-900 mb-2">Location</h3>
                 <div className="space-y-2">
-                  <button className="flex items-center w-full text-left px-3 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-50">
-                    <MapPin size={16} className="mr-2" />
-                    San Francisco, CA
-                  </button>
-                  <button className="flex items-center w-full text-left px-3 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-50">
-                    <MapPin size={16} className="mr-2" />
-                    New York, NY
-                  </button>
-                  <button className="flex items-center w-full text-left px-3 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-50">
-                    <MapPin size={16} className="mr-2" />
-                    Boston, MA
-                  </button>
+                  {['San Francisco, CA', 'New York, NY', 'Boston, MA'].map(location => (
+                    <button 
+                      key={location}
+                      onClick={() => toggleLocation(location)}
+                      className={`flex items-center w-full text-left px-3 py-2 rounded-md text-sm ${
+                        selectedLocations.includes(location)
+                          ? 'bg-primary-50 text-primary-700'
+                          : 'text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      <MapPin size={16} className="mr-2" />
+                      {location}
+                    </button>
+                  ))}
                 </div>
               </div>
             </CardBody>

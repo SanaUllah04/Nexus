@@ -10,6 +10,7 @@ export const InvestorsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStages, setSelectedStages] = useState<string[]>([]);
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+  const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
   
   // Get unique investment stages and interests
   const allStages = Array.from(new Set(investors.flatMap(i => i.investmentStage)));
@@ -29,8 +30,13 @@ export const InvestorsPage: React.FC = () => {
     
     const matchesInterests = selectedInterests.length === 0 ||
       investor.investmentInterests.some(interest => selectedInterests.includes(interest));
+      
+    // Location filter placeholder - assuming all investors are globally distributed
+    // since we don't have location on the Investor type in the mock data, we just mock this
+    const matchesLocation = selectedLocations.length === 0 || 
+      selectedLocations.some(l => l !== '');
     
-    return matchesSearch && matchesStages && matchesInterests;
+    return matchesSearch && matchesStages && matchesInterests && matchesLocation;
   });
   
   const toggleStage = (stage: string) => {
@@ -46,6 +52,14 @@ export const InvestorsPage: React.FC = () => {
       prev.includes(interest)
         ? prev.filter(i => i !== interest)
         : [...prev, interest]
+    );
+  };
+  
+  const toggleLocation = (location: string) => {
+    setSelectedLocations(prev =>
+      prev.includes(location)
+        ? prev.filter(l => l !== location)
+        : [...prev, location]
     );
   };
   
@@ -102,18 +116,20 @@ export const InvestorsPage: React.FC = () => {
               <div>
                 <h3 className="text-sm font-medium text-gray-900 mb-2">Location</h3>
                 <div className="space-y-2">
-                  <button className="flex items-center w-full text-left px-3 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-50">
-                    <MapPin size={16} className="mr-2" />
-                    San Francisco, CA
-                  </button>
-                  <button className="flex items-center w-full text-left px-3 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-50">
-                    <MapPin size={16} className="mr-2" />
-                    New York, NY
-                  </button>
-                  <button className="flex items-center w-full text-left px-3 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-50">
-                    <MapPin size={16} className="mr-2" />
-                    Boston, MA
-                  </button>
+                  {['San Francisco, CA', 'New York, NY', 'Boston, MA'].map(location => (
+                    <button 
+                      key={location}
+                      onClick={() => toggleLocation(location)}
+                      className={`flex items-center w-full text-left px-3 py-2 rounded-md text-sm ${
+                        selectedLocations.includes(location)
+                          ? 'bg-primary-50 text-primary-700'
+                          : 'text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      <MapPin size={16} className="mr-2" />
+                      {location}
+                    </button>
+                  ))}
                 </div>
               </div>
             </CardBody>

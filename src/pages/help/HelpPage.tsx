@@ -1,5 +1,6 @@
 import React from 'react';
 import { Search, Book, MessageCircle, Phone, Mail, ExternalLink } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { Card, CardHeader, CardBody } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
@@ -24,6 +25,11 @@ const faqs = [
 ];
 
 export const HelpPage: React.FC = () => {
+  const handleContactSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    toast.success('Message sent successfully! Our support team will get back to you shortly.');
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
@@ -55,6 +61,7 @@ export const HelpPage: React.FC = () => {
               variant="outline"
               className="mt-4"
               rightIcon={<ExternalLink size={16} />}
+              onClick={() => toast.success('Opening Documentation...')}
             >
               View Docs
             </Button>
@@ -70,7 +77,7 @@ export const HelpPage: React.FC = () => {
             <p className="text-sm text-gray-600 mt-2">
               Chat with our support team in real-time
             </p>
-            <Button className="mt-4">
+            <Button className="mt-4" onClick={() => toast.success('Starting Live Chat...')}>
               Start Chat
             </Button>
           </CardBody>
@@ -89,6 +96,7 @@ export const HelpPage: React.FC = () => {
               variant="outline"
               className="mt-4"
               leftIcon={<Mail size={16} />}
+              onClick={() => toast.success('Opening Contact modal...')}
             >
               Contact Support
             </Button>
@@ -123,7 +131,7 @@ export const HelpPage: React.FC = () => {
           <h2 className="text-lg font-medium text-gray-900">Still need help?</h2>
         </CardHeader>
         <CardBody>
-          <form className="space-y-6 max-w-2xl">
+          <form className="space-y-6 max-w-2xl" onSubmit={handleContactSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Input
                 label="Name"

@@ -21,7 +21,7 @@ export const InvestorProfile: React.FC = () => {
       <div className="text-center py-12">
         <h2 className="text-2xl font-bold text-gray-900">Investor not found</h2>
         <p className="text-gray-600 mt-2">The investor profile you're looking for doesn't exist or has been removed.</p>
-        <Link to="/dashboard/entrepreneur">
+        <Link to={currentUser?.role === 'entrepreneur' ? '/dashboard/entrepreneur' : '/dashboard/investor'}>
           <Button variant="outline" className="mt-4">Back to Dashboard</Button>
         </Link>
       </div>
@@ -75,12 +75,14 @@ export const InvestorProfile: React.FC = () => {
             )}
             
             {isCurrentUser && (
-              <Button
-                variant="outline"
-                leftIcon={<UserCircle size={18} />}
-              >
-                Edit Profile
-              </Button>
+              <Link to="/settings">
+                <Button
+                  variant="outline"
+                  leftIcon={<UserCircle size={18} />}
+                >
+                  Edit Profile
+                </Button>
+              </Link>
             )}
           </div>
         </CardBody>
