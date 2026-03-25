@@ -39,12 +39,24 @@ const authenticateToken = (req, res, next) => {
     try {
         const verified = jwt.verify(token, process.env.JWT_SECRET);
         req.user = verified;
-        console.log('🔐 Token VERIFIED for user:', verified.email);
+        console.log('🔐 Token VERIFIED for user:', verified.email, '| Role:', verified.role);
         next();
     } catch (err) {
         console.log('❌ Token verification FAILED:', err.message);
         res.status(403).json({ error: 'Invalid or expired token' });
     }
+};
+
+// Role-based authorization middleware
+const authorizeRole = (allowedRoles) => {
+    return (req, res, next) => {
+        if (!allowedRoles.includes(req.user.role)) {
+            console.log('🚫 ACCESS DENIED for role:', req.user.role, '| Required:', allowedRoles);
+            return res.status(403).json({ error: 'Access denied. Insufficient permissions.' });
+        }
+        console.log('✅ Role authorized:', req.user.role);
+        next();
+    };
 };
 
 // Register endpoint
@@ -84,7 +96,6 @@ app.post('/api/login', async (req, res) => {
         let token = user.token;
         let tokenValid = false;
 
-        // Check if existing token is still valid
         if (token && user.tokenExpires && new Date() < user.tokenExpires) {
             try {
                 jwt.verify(token, process.env.JWT_SECRET);
@@ -98,7 +109,6 @@ app.post('/api/login', async (req, res) => {
             console.log('🆕 No valid token found, creating NEW token');
         }
 
-        // Create new token if none exists or expired
         if (!tokenValid) {
             token = jwt.sign(
                 { userId: user._id, email: user.email, role: user.role },
@@ -106,15 +116,14 @@ app.post('/api/login', async (req, res) => {
                 { expiresIn: '24h' }
             );
 
-            // Save token to user document
             user.token = token;
-            user.tokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+            user.tokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
             await user.save();
             console.log('✅ NEW token CREATED and SAVED to DB');
             console.log('   Token:', token.substring(0, 50) + '...');
         }
 
-        console.log('🎉 Login SUCCESS - Token being sent to user');
+        console.log('🎉 Login SUCCESS - Role:', user.role);
         res.json({
             message: 'Login successful',
             token: token,
@@ -131,9 +140,9 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// Protected route - get current user profile
+// Protected route - get current user profile (any role)
 app.get('/api/profile', authenticateToken, async (req, res) => {
-    console.log('📋 Profile request with VALID token for userId:', req.user.userId);
+    console.log('📋 Profile request for userId:', req.user.userId, '| Role:', req.user.role);
     try {
         const user = await User.findById(req.user.userId).select('-password');
         if (!user) {
@@ -145,9 +154,57 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
     }
 });
 
+// ENTREPRENEUR ONLY routes
+app.get('/api/entrepreneur/dashboard', authenticateToken, authorizeRole(['entrepreneur']), async (req, res) => {
+    console.log('🏢 Entrepreneur dashboard accessed by:', req.user.email);
+    res.json({
+        message: 'Entrepreneur dashboard data',
+        role: req.user.role,
+        data: {
+            myStartups: [],
+            fundingRequests: [],
+            investorMatches: []
+        }
+    });
+});
+
+app.post('/api/entrepreneur/pitch', authenticateToken, authorizeRole(['entrepreneur']), async (req, res) => {
+    console.log('📊 New pitch created by:', req.user.email);
+    res.json({ message: 'Pitch created successfully' });
+});
+
+// INVESTOR ONLY routes
+app.get('/api/investor/dashboard', authenticateToken, authorizeRole(['investor']), async (req, res) => {
+    console.log('💰 Investor dashboard accessed by:', req.user.email);
+    res.json({
+        message: 'Investor dashboard data',
+        role: req.user.role,
+        data: {
+            portfolio: [],
+            dealFlow: [],
+            startupMatches: []
+        }
+    });
+});
+
+app.post('/api/investor/invest', authenticateToken, authorizeRole(['investor']), async (req, res) => {
+    console.log('💵 Investment made by:', req.user.email);
+    res.json({ message: 'Investment recorded successfully' });
+});
+
+// BOTH ROLES allowed
+app.get('/api/startups', authenticateToken, authorizeRole(['entrepreneur', 'investor']), async (req, res) => {
+    console.log('📋 Startup listings viewed by:', req.user.email, '| Role:', req.user.role);
+    res.json({
+        message: 'Public startup listings',
+        role: req.user.role,
+        startups: []
+    });
+});
+
 // Protected - update own profile only
 app.put('/api/users/:id', authenticateToken, async (req, res) => {
-    console.log('✏️  Update request with VALID token for userId:', req.user.userId);
+    console.log('✏️  Update request by userId:', req.user.userId);
     try {
         if (req.params.id !== req.user.userId) {
             return res.status(403).json({ error: 'Can only update your own profile' });
@@ -163,7 +220,7 @@ app.put('/api/users/:id', authenticateToken, async (req, res) => {
 
 // Protected - delete own account
 app.delete('/api/users/:id', authenticateToken, async (req, res) => {
-    console.log('🗑️  Delete request with VALID token for userId:', req.user.userId);
+    console.log('🗑️  Delete request by userId:', req.user.userId);
     try {
         if (req.params.id !== req.user.userId) {
             return res.status(403).json({ error: 'Can only delete your own account' });

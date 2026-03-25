@@ -27,6 +27,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(false);
   }, []);
 
+  // Fetch current user profile with token
   const fetchProfile = async (): Promise<void> => {
     try {
       const response = await fetch('http://localhost:5000/api/profile', {
@@ -46,6 +47,89 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('Profile fetched:', data.user);
     } catch (error) {
       console.error('Fetch profile error:', error);
+    }
+  };
+
+  // ROLE-BASED API CALLS
+
+  // Entrepreneur only
+  const fetchEntrepreneurDashboard = async (): Promise<any> => {
+    try {
+      const response = await fetch('http://localhost:5000/api/entrepreneur/dashboard', {
+        method: 'GET',
+        headers: getAuthHeaders()
+      });
+
+      if (!response.ok) {
+        if (response.status === 403) {
+          throw new Error('Access denied. Investors cannot access entrepreneur dashboard.');
+        }
+        if (response.status === 401) {
+          logout();
+          throw new Error('Session expired. Please login again.');
+        }
+        throw new Error('Failed to fetch dashboard');
+      }
+
+      const data = await response.json();
+      console.log('Entrepreneur dashboard:', data);
+      return data;
+    } catch (error) {
+      toast.error((error as Error).message);
+      throw error;
+    }
+  };
+
+  // Investor only
+  const fetchInvestorDashboard = async (): Promise<any> => {
+    try {
+      const response = await fetch('http://localhost:5000/api/investor/dashboard', {
+        method: 'GET',
+        headers: getAuthHeaders()
+      });
+
+      if (!response.ok) {
+        if (response.status === 403) {
+          throw new Error('Access denied. Entrepreneurs cannot access investor dashboard.');
+        }
+        if (response.status === 401) {
+          logout();
+          throw new Error('Session expired. Please login again.');
+        }
+        throw new Error('Failed to fetch dashboard');
+      }
+
+      const data = await response.json();
+      console.log('Investor dashboard:', data);
+      return data;
+    } catch (error) {
+      toast.error((error as Error).message);
+      throw error;
+    }
+  };
+
+  // Both roles
+  const fetchStartups = async (): Promise<any> => {
+    try {
+      const response = await fetch('http://localhost:5000/api/startups', {
+        method: 'GET',
+        headers: getAuthHeaders()
+      });
+
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          logout();
+          throw new Error('Session expired or access denied.');
+        }
+        throw new Error('Failed to fetch startups');
+      }
+
+      const data = await response.json();
+      console.log('Startups:', data);
+      return data;
+    } catch (error) {
+      toast.error((error as Error).message);
+      throw error;
     }
   };
 
@@ -226,6 +310,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     updateProfile,
     deleteAccount,
     fetchProfile,
+    fetchEntrepreneurDashboard,
+    fetchInvestorDashboard,
+    fetchStartups,
     isAuthenticated: !!user,
     isLoading
   };
